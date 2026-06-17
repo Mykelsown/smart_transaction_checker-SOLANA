@@ -2,9 +2,10 @@ import Client, {
   CommitmentLevel,
   SubscribeRequest,
 } from "@triton-one/yellowstone-grpc";
+import * as path from "path";
 import * as dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 // ─── Config ────────────────────────────────────────────────────────────────
 let reconnectScheduled = false;

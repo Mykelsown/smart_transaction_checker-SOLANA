@@ -1,7 +1,8 @@
 import { Connection, clusterApiUrl } from "@solana/web3.js";
+import * as path from "path";
 import * as dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 async function main() {
   // Connect to your Helius RPC
