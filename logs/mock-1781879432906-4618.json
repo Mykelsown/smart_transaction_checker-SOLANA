@@ -1,0 +1,18 @@
+{
+  "bundle_id": "mock-1781879432906-4618",
+  "tip_amount_lamports": 5000,
+  "agent_reasoning": null,
+  "submitted_at": "2026-06-19T14:30:32.906Z",
+  "submitted_slot": 318500099,
+  "processed_at": null,
+  "processed_slot": null,
+  "confirmed_at": null,
+  "confirmed_slot": null,
+  "finalized_at": null,
+  "finalized_slot": null,
+  "status": "failed",
+  "failure_reason": "ExpiredBlockhash",
+  "latency_processed_ms": null,
+  "latency_confirmed_ms": null,
+  "latency_finalized_ms": null
+}

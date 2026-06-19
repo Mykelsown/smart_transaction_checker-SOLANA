@@ -1,0 +1,18 @@
+{
+  "bundle_id": "mock-1781879432907-6731",
+  "tip_amount_lamports": 12000,
+  "agent_reasoning": null,
+  "submitted_at": "2026-06-19T14:30:32.907Z",
+  "submitted_slot": 318500099,
+  "processed_at": "2026-06-19T14:30:33.772Z",
+  "processed_slot": 318500100,
+  "confirmed_at": "2026-06-19T14:30:36.933Z",
+  "confirmed_slot": 318500102,
+  "finalized_at": "2026-06-19T14:30:52.456Z",
+  "finalized_slot": 318500132,
+  "status": "finalized",
+  "failure_reason": null,
+  "latency_processed_ms": 864,
+  "latency_confirmed_ms": 4022,
+  "latency_finalized_ms": 19534
+}

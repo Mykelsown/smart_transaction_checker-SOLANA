@@ -11,6 +11,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.105.0",
     "@solana/web3.js": "^1.98.4",
     "@triton-one/yellowstone-grpc": "^2.0.0",
     "dotenv": "^17.4.2",
