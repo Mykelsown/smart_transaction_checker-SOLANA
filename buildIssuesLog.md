@@ -30,3 +30,14 @@
 **Outcome:** Leader schedule successfully fetched from devnet RPC, cross-referenced against 690 live Jito-enabled mainnet validators, correctly identified no Jito leader in devnet's near-term schedule (expected), confirmed leader rotation behavior (same identity holding 4 consecutive slots) matches Solana's known leader scheduling pattern.
 
 ---
+
+## Phase 3: Bundle Construction & Submission
+
+| Issue | Cause | Fix |
+|---|---|---|
+| Jito bundles require mainnet, not devnet | Jito's block engine, tip accounts, and ~95% validator adoption are mainnet-specific; devnet has no real MEV incentive | Decided to test bundle submission on mainnet, with broader stream/RPC stack staying on devnet |
+| Real bundle submissions require real SOL | Tip transfers and transaction fees are unavoidable costs of landing a verifiable, explorer-checkable bundle | i will resume once 0.05-0.1 SOL is funded to a dedicated, disposable mainnet-test wallet |
+
+**Outcome:** Phase 3 paused because of lack of mainnet SOL funding. so i ended up building phases 4 and 5 against mock bundle data matching real Jito response shape, so no new code-logic needed once i resume with phase 3.
+
+---
