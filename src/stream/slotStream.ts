@@ -7,18 +7,18 @@ import * as dotenv from "dotenv";
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-// ─── Config ────────────────────────────────────────────────────────────────
+// --- Config 
 let reconnectScheduled = false;
 const ENDPOINT = process.env.YELLOWSTONE_ENDPOINT!;
 const TOKEN    = process.env.YELLOWSTONE_TOKEN || "";
 const seenUpdates = new Set<string>();
 
-// ─── Reconnection state ────────────────────────────────────────────────────
+// --- Reconnection state 
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 10;
 const BASE_DELAY_MS = 1000;
 
-// ─── Subscription request ──────────────────────────────────────────────────
+// --- Subscription request 
 const subscribeRequest: SubscribeRequest = {
   slots: {
     slotSubscribe: {},
@@ -34,7 +34,7 @@ const subscribeRequest: SubscribeRequest = {
   ping: undefined,
 };
 
-// ─── Main connect function ─────────────────────────────────────────────────
+// --- Main connect function
 async function connectAndStream() {
   console.log(`\n🔌 Connecting to Yellowstone gRPC...`);
   console.log(`   Endpoint: ${ENDPOINT}\n`);
@@ -43,7 +43,7 @@ async function connectAndStream() {
     const client = new Client(ENDPOINT, TOKEN, {});
     const stream = await client.subscribe();
 
-    // ── Events ────────────────────────────────────────────────────────────
+    // --- Events 
     stream.on("data", (data: any) => {
       if (data.slot) {
         const slot      = data.slot.slot;
@@ -80,7 +80,7 @@ async function connectAndStream() {
       scheduleReconnect();
     });
 
-    // ── Send subscription ─────────────────────────────────────────────────
+    // ── Send subscription
     await new Promise<void>((resolve, reject) => {
       stream.write(subscribeRequest, (err: any) => {
         if (err) reject(err);
@@ -97,7 +97,7 @@ async function connectAndStream() {
   }
 }
 
-// ─── Exponential backoff ───────────────────────────────────────────────────
+// --- Exponential backoff 
 function scheduleReconnect() {
   if (reconnectScheduled) return; // prevent double-scheduling
   reconnectScheduled = true;
@@ -115,13 +115,13 @@ function scheduleReconnect() {
   }, delay);
 }
 
-// ─── Graceful shutdown ─────────────────────────────────────────────────────
+// --- Graceful shutdown 
 process.on("SIGINT", () => {
   console.log("\n\n🛑 Stopped by user.");
   process.exit(0);
 });
 
-// ─── Start ─────────────────────────────────────────────────────────────────
+// --- Start 
 console.log("🚀 Smart Transaction Stack — Phase 1");
 console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 connectAndStream();
