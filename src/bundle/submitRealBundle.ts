@@ -3,7 +3,8 @@ import {
   Keypair,
   PublicKey,
   SystemProgram,
-  Transaction,
+  TransactionMessage,
+  VersionedTransaction,
 } from "@solana/web3.js";
 import * as fs from "fs";
 import * as path from "path";
@@ -31,10 +32,10 @@ async function getTipAccounts(): Promise<string[]> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getTipAccounts", params: [] }),
     });
-    const altData = await altRes.json();
+    const altData = await altRes.json() as { result: string[] };
     return altData.result;
   }
-  const data = await res.json();
+  const data = await res.json() as string[] | string;
   return Array.isArray(data) ? data : [data];
 }
 
@@ -71,32 +72,29 @@ async function main() {
   console.log(`Valid until block height: ${lastValidBlockHeight}\n`);
 
   // ── Step 4: Build the transaction — a tiny self-transfer + tip ─────────
-  const transaction = new Transaction({
-    recentBlockhash: blockhash,
-    feePayer: payer.publicKey,
-  });
+  const instructions = [
+  SystemProgram.transfer({
+    fromPubkey: payer.publicKey,
+    toPubkey: payer.publicKey,
+    lamports: 1000,
+  }),
+  SystemProgram.transfer({
+    fromPubkey: payer.publicKey,
+    toPubkey: tipAccount,
+    lamports: tipLamports,
+  }),
+];
 
-  // Minimal self-transfer (1000 lamports to self — just needs to be a valid instruction)
-  transaction.add(
-    SystemProgram.transfer({
-      fromPubkey: payer.publicKey,
-      toPubkey: payer.publicKey,
-      lamports: 1000,
-    })
-  );
+const messageV0 = new TransactionMessage({
+  payerKey: payer.publicKey,
+  recentBlockhash: blockhash,
+  instructions,
+}).compileToV0Message();
 
-  // Tip transfer to Jito's tip account
-  transaction.add(
-    SystemProgram.transfer({
-      fromPubkey: payer.publicKey,
-      toPubkey: tipAccount,
-      lamports: tipLamports,
-    })
-  );
+const transaction = new VersionedTransaction(messageV0);
+transaction.sign([payer]);
 
-  transaction.sign(payer);
-
-  const serializedTx = transaction.serialize().toString("base64");
+const serializedTx = Buffer.from(transaction.serialize()).toString("base64");
 
   // ── Step 5: Submit as a Jito bundle ─────────────────────────────────────
   console.log("Submitting bundle to Jito block engine...");
@@ -114,7 +112,7 @@ async function main() {
     }),
   });
 
-  const bundleData = await bundleRes.json();
+  const bundleData = await bundleRes.json() as { error?: any; result?: string };
 
   if (bundleData.error) {
     console.error("Bundle submission failed:", bundleData.error);
