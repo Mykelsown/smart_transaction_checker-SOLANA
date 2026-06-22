@@ -105,10 +105,10 @@ const serializedTx = Buffer.from(transaction.serialize()).toString("base64");
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "sendBundle",
-      params: [[serializedTx]],
+        jsonrpc: "2.0",
+        id: 1,
+        method: "sendBundle",
+        params: [[serializedTx], { encoding: "base64" }],
     }),
   });
 
