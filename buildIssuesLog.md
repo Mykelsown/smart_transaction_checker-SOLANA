@@ -36,8 +36,28 @@
 | Issue | Cause | Fix |
 |---|---|---|
 | Jito bundles require mainnet, not devnet | Jito's block engine, tip accounts, and ~95% validator adoption are mainnet-specific; devnet has no real MEV incentive | Decided to test bundle submission on mainnet, with broader stream/RPC stack staying on devnet |
-| Real bundle submissions require real SOL | Tip transfers and transaction fees are unavoidable costs of landing a verifiable, explorer-checkable bundle | i will resume once 0.05-0.1 SOL is funded to a dedicated, disposable mainnet-test wallet |
+| Real bundle submissions require real SOL | Tip transfers and transaction fees are unavoidable costs of landing a verifiable, explorer-checkable bundle | Deferred — resume once 0.05-0.1 SOL is funded to a dedicated, disposable mainnet-test wallet |
 
-**Outcome:** Phase 3 paused because of lack of mainnet SOL funding. so i ended up building phases 4 and 5 against mock bundle data matching real Jito response shape, so no new code-logic needed once i resume with phase 3.
+**Outcome:** Phase 3 paused pending mainnet SOL funding. Phases 4 and 5 built against mock bundle data matching real Jito response shape, so no rewrites needed once Phase 3 resumes — only the data source swaps from mock to live.
+
+---
+
+## Phase 4: Lifecycle Tracking (Mock Mode)
+
+| Issue | Cause | Fix |
+|---|---|---|
+| `Cannot find name 'console'` / `'process'` | `tsconfig.json` missing explicit `"types": ["node"]`, so Node's global types weren't loaded | Added `"types": ["node"]` to `compilerOptions`; also confirmed `@types/node` was installed |
+
+**Outcome:** 10 mock bundle submissions logged successfully — 8 finalized with realistic slot/timestamp progression and varying tip amounts, 2 classified failures (ExpiredBlockhash, FeeTooLow), satisfying the bounty's minimum lifecycle log requirement. Built on a swappable mock data source so Phase 3 (real mainnet submission) can be plugged in later without rewriting tracker/logger code.
+
+---
+
+## Phase 5: AI Agent (Tip Intelligence)
+
+| Issue | Cause | Fix |
+|---|---|---|
+| Parsed tip silently mismatched the model's actual reasoning in 2 of 3 demo runs | Model didn't always end response with the exact `TIP: <number>` format; regex match failed silently and fell back to p50 without any indication | Added explicit `usedFallback` flag with a loud console warning when fallback fires; strengthened prompt with an exact-format example and explicit "no commentary after this line" instruction |
+
+**Outcome:** Ran demo against 3 realistic mock scenarios (low/high/moderate network conditions) to validate the reasoning pipeline before connecting to real Phase 3 data — avoids spending API calls on unverified logic. After the parser fix, all 3 scenarios produced a final tip that correctly matched the model's own stated reasoning (6,000 / 120,000 / 28,000 lamports respectively), with no silent fallback triggered. Tip values scaled sensibly with network congestion, recent failure rate, and urgency — confirming genuine reasoning-driven decisions rather than hardcoded or default values.
 
 ---

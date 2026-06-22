@@ -61,25 +61,25 @@ Do not write a range. Do not write additional commentary after this line. Output
 
   const tipMatch = fullText.match(/TIP:\s*(\d+)/);
 
-let tipLamports: number;
-let usedFallback = false;
+  let tipLamports: number;
+  let usedFallback = false;
 
-if (tipMatch) {
-  tipLamports = parseInt(tipMatch[1], 10);
-} else {
-  // The model didn't follow the output format — this is a real problem,
-  // not a normal path. Log it loudly so it's never silently hidden.
-  usedFallback = true;
-  tipLamports = input.tipPercentiles.p50;
-  console.warn(
-    "\n⚠️  WARNING: Agent did not return a parseable TIP line. " +
-    "Falling back to p50 — this decision was NOT reasoned by the agent.\n"
-  );
-}
+  if (tipMatch) {
+    tipLamports = parseInt(tipMatch[1], 10);
+  } else {
+    // The model didn't follow the output format — this is a real problem,
+    // not a normal path. Log it loudly so it's never silently hidden.
+    usedFallback = true;
+    tipLamports = input.tipPercentiles.p50;
+    console.warn(
+      "\n⚠️  WARNING: Agent did not return a parseable TIP line. " +
+      "Falling back to p50 — this decision was NOT reasoned by the agent.\n"
+    );
+  }
 
-return {
-  tipLamports,
-  reasoning: fullText.trim(),
-  usedFallback,
-};
+  return {
+    tipLamports,
+    reasoning: fullText.trim(),
+    usedFallback,
+  };
 }
