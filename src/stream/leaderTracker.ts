@@ -21,7 +21,7 @@ interface JitoValidator {
 
 let jitoVoteAccounts = new Set<string>();
 
-// ─── Fetch the list of Jito-running validators ─────────────────────────────
+// Fetches the list of Jito-running validators
 async function loadJitoValidators(): Promise<void> {
   try {
     const res = await fetch(JITO_VALIDATORS_URL);
@@ -49,7 +49,7 @@ async function loadJitoValidators(): Promise<void> {
   }
 }
 
-// ─── Map vote account -> identity pubkey (leader schedule uses identity, not vote account) ─
+// Map vote account -> identity pubkey (leader schedule uses identity, not vote account) 
 async function getValidatorIdentityMap(): Promise<Map<string, string>> {
   const voteAccounts = await connection.getVoteAccounts();
   const all = [...voteAccounts.current, ...voteAccounts.delinquent];
@@ -61,7 +61,7 @@ async function getValidatorIdentityMap(): Promise<Map<string, string>> {
   return map;
 }
 
-// ─── Main leader tracking loop ─────────────────────────────────────────────
+// Main leader tracking loop
 async function trackLeaders() {
   console.log("Smart Transaction Stack — Leader Tracking");
   console.log("====================================================\n");
@@ -107,7 +107,7 @@ async function trackLeaders() {
   }
 }
 
-// ─── Run once, then repeat every 5 seconds to show it updating live ───────
+// Run once, then repeat every 5 seconds to show it updating live
 async function main() {
   await trackLeaders();
 

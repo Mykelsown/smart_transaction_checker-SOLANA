@@ -10,19 +10,58 @@ import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
 
+// Waits until a Jito-enabled leader is close (reuses Phase 2 loic for mainnet this time)
+async function waitForJitoLeaderWindow(connection: Connection): Promise<void> {
+  const JITO_VALIDATORS_URL = "https://kobe.mainnet.jito.network/api/v1/validators";
+
+  console.log("Loading live Jito validator list...");
+  const res = await fetch(JITO_VALIDATORS_URL);
+  const data = (await res.json()) as { validators: { vote_account: string; running_jito: boolean }[] };
+  const jitoVoteAccounts = new Set(
+    data.validators.filter((v) => v.running_jito).map((v) => v.vote_account)
+  );
+  console.log(`Loaded ${jitoVoteAccounts.size} Jito-enabled validators.\n`);
+
+  const voteAccounts = await connection.getVoteAccounts();
+  const identityToVote = new Map<string, string>();
+  [...voteAccounts.current, ...voteAccounts.delinquent].forEach((v) => {
+    identityToVote.set(v.nodePubkey, v.votePubkey);
+  });
+
+  const MAX_WAIT_CHECKS = 20;
+  for (let attempt = 0; attempt < MAX_WAIT_CHECKS; attempt++) {
+    const currentSlot = await connection.getSlot("confirmed");
+    const leaders = await connection.getSlotLeaders(currentSlot, 8);
+
+    for (let i = 0; i < leaders.length; i++) {
+      const voteAccount = identityToVote.get(leaders[i].toBase58());
+      const isJito = voteAccount ? jitoVoteAccounts.has(voteAccount) : false;
+      if (isJito && i <= 2) {
+        console.log(`Jito leader found ${i} slot(s) away (slot ${currentSlot + i}). Proceeding now.\n`);
+        return;
+      }
+    }
+
+    console.log(`No close Jito leader yet (check ${attempt + 1}/${MAX_WAIT_CHECKS}). Waiting 2s...`);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+
+  throw new Error("No Jito leader window found within wait limit. Try again shortly.");
+}
+
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL!;
 const MAINNET_KEYPAIR_PATH = process.env.MAINNET_KEYPAIR_PATH!;
 const JITO_BLOCK_ENGINE_URL = process.env.JITO_BLOCK_ENGINE_URL!;
 
-// ─── Load the funded mainnet keypair ───────────────────────────────────────
+// Load the funded mainnet keypair 
 function loadKeypair(filePath: string): Keypair {
   const secret = JSON.parse(fs.readFileSync(filePath, "utf-8"));
   return Keypair.fromSecretKey(Uint8Array.from(secret));
 }
 
-// ─── Fetch live tip accounts from Jito (no hardcoded addresses) ───────────
+// Fetch live tip accounts from Jito (no hardcoded addresses)
 async function getTipAccounts(): Promise<string[]> {
   const res = await fetch(`${JITO_BLOCK_ENGINE_URL.replace("/bundles", "")}/random_tip_account`);
   if (!res.ok) {
@@ -55,23 +94,26 @@ async function main() {
     throw new Error("Insufficient balance to cover fees and tip. Aborting before spending anything.");
   }
 
-  // ── Step 1: Get live tip accounts ─────────────────────────────────────
+  // Get live tip accounts
   console.log("Fetching live Jito tip accounts...");
   const tipAccounts = await getTipAccounts();
   console.log(`Got ${tipAccounts.length} tip accounts.`);
   const tipAccount = new PublicKey(tipAccounts[Math.floor(Math.random() * tipAccounts.length)]);
   console.log(`Selected tip account: ${tipAccount.toBase58()}\n`);
 
-  // ── Step 2: Decide tip amount (placeholder for now — Phase 5 agent plugs in here) ──
-  const tipLamports = 5000; // TEMPORARY — will be replaced with agent's decideTip() output
+  // Decide tip amount (placeholder for now - Phase 5 agent plugs in here)
+  const tipLamports = 1_500_000; // TEMPORARY - will be replaced with agent's decideTip() output
   console.log(`Tip amount: ${tipLamports} lamports (placeholder — agent integration next)\n`);
 
-  // ── Step 3: Fetch a fresh blockhash at 'confirmed' commitment ──────────
+   // Wait for a near Jito leader window before locking in any blockhash 
+  await waitForJitoLeaderWindow(connection);
+
+  //  Fetch a fresh blockhash at 'confirmed' commitment 
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
   console.log(`Blockhash: ${blockhash}`);
   console.log(`Valid until block height: ${lastValidBlockHeight}\n`);
 
-  // ── Step 4: Build the transaction — a tiny self-transfer + tip ─────────
+  // Build the transaction — a tiny self-transfer + tip
   const instructions = [
   SystemProgram.transfer({
     fromPubkey: payer.publicKey,
@@ -96,7 +138,7 @@ transaction.sign([payer]);
 
 const serializedTx = Buffer.from(transaction.serialize()).toString("base64");
 
-  // ── Step 5: Submit as a Jito bundle ─────────────────────────────────────
+  // Submit as a Jito bundle
   console.log("Submitting bundle to Jito block engine...");
   const submittedAt = new Date().toISOString();
   const submittedSlot = await connection.getSlot("confirmed");
