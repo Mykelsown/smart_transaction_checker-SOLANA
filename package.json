@@ -21,6 +21,8 @@
   },
   "devDependencies": {
     "@types/node": "^25.9.3",
+    "bip39": "^3.1.0",
+    "ed25519-hd-key": "^2.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }

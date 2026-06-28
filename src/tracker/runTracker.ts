@@ -1,6 +1,8 @@
-import { submitMockBundle } from "./mockSource";
+// import { submitMockBundle } from "./mockSource";
+import { submitRealBundle } from "./realSource"; 
 import { writeBundleLog, printSummary } from "./logger";
 import { FailureReason } from "./types";
+import * as path from "path"
 
 // Making 8 successful + 2 forced failures = 10 total
 
@@ -25,7 +27,8 @@ async function main() {
       failureCount++;
     }
 
-    const record = await submitMockBundle(forceFailure);
+    // const record = await submitMockBundle(forceFailure);
+    const record = await submitRealBundle(path.resolve(__dirname, "../../logs"));
     writeBundleLog(record);
 
     if (record.status === "failed") {

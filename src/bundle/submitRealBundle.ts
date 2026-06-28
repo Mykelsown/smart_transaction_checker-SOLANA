@@ -9,16 +9,21 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
+import { decideTip } from "../agent/tipAgent";
 
 // Waits until a Jito-enabled leader is close (reuses Phase 2 loic for mainnet this time)
+// ─── Wait until a Jito-enabled leader is close (reuses Phase 2 logic, mainnet) ──
 async function waitForJitoLeaderWindow(connection: Connection): Promise<void> {
-  const JITO_VALIDATORS_URL = "https://kobe.mainnet.jito.network/api/v1/validators";
+  const JITO_VALIDATORS_URL =
+    "https://kobe.mainnet.jito.network/api/v1/validators";
 
   console.log("Loading live Jito validator list...");
   const res = await fetch(JITO_VALIDATORS_URL);
-  const data = (await res.json()) as { validators: { vote_account: string; running_jito: boolean }[] };
+  const data = (await res.json()) as {
+    validators: { vote_account: string; running_jito: boolean }[];
+  };
   const jitoVoteAccounts = new Set(
-    data.validators.filter((v) => v.running_jito).map((v) => v.vote_account)
+    data.validators.filter((v) => v.running_jito).map((v) => v.vote_account),
   );
   console.log(`Loaded ${jitoVoteAccounts.size} Jito-enabled validators.\n`);
 
@@ -37,16 +42,22 @@ async function waitForJitoLeaderWindow(connection: Connection): Promise<void> {
       const voteAccount = identityToVote.get(leaders[i].toBase58());
       const isJito = voteAccount ? jitoVoteAccounts.has(voteAccount) : false;
       if (isJito && i <= 2) {
-        console.log(`Jito leader found ${i} slot(s) away (slot ${currentSlot + i}). Proceeding now.\n`);
+        console.log(
+          `Jito leader found ${i} slot(s) away (slot ${currentSlot + i}). Proceeding now.\n`,
+        );
         return;
       }
     }
 
-    console.log(`No close Jito leader yet (check ${attempt + 1}/${MAX_WAIT_CHECKS}). Waiting 2s...`);
+    console.log(
+      `No close Jito leader yet (check ${attempt + 1}/${MAX_WAIT_CHECKS}). Waiting 2s...`,
+    );
     await new Promise((resolve) => setTimeout(resolve, 2000));
   }
 
-  throw new Error("No Jito leader window found within wait limit. Try again shortly.");
+  throw new Error(
+    "No Jito leader window found within wait limit. Try again shortly.",
+  );
 }
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
@@ -55,7 +66,7 @@ const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL!;
 const MAINNET_KEYPAIR_PATH = process.env.MAINNET_KEYPAIR_PATH!;
 const JITO_BLOCK_ENGINE_URL = process.env.JITO_BLOCK_ENGINE_URL!;
 
-// Load the funded mainnet keypair 
+// Load the funded mainnet keypair
 function loadKeypair(filePath: string): Keypair {
   const secret = JSON.parse(fs.readFileSync(filePath, "utf-8"));
   return Keypair.fromSecretKey(Uint8Array.from(secret));
@@ -63,24 +74,83 @@ function loadKeypair(filePath: string): Keypair {
 
 // Fetch live tip accounts from Jito (no hardcoded addresses)
 async function getTipAccounts(): Promise<string[]> {
-  const res = await fetch(`${JITO_BLOCK_ENGINE_URL.replace("/bundles", "")}/random_tip_account`);
+  const res = await fetch(
+    `${JITO_BLOCK_ENGINE_URL.replace("/bundles", "")}/random_tip_account`,
+  );
   if (!res.ok) {
     // Fallback endpoint shape — some Jito deployments expose getTipAccounts via RPC-style call
-    const altRes = await fetch(JITO_BLOCK_ENGINE_URL.replace("/bundles", "/getTipAccounts"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getTipAccounts", params: [] }),
-    });
-    const altData = await altRes.json() as { result: string[] };
+    const altRes = await fetch(
+      JITO_BLOCK_ENGINE_URL.replace("/bundles", "/getTipAccounts"),
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getTipAccounts",
+          params: [],
+        }),
+      },
+    );
+    const altData = (await altRes.json()) as { result: string[] };
     return altData.result;
   }
-  const data = await res.json() as string[] | string;
+  const data = (await res.json()) as string[] | string;
   return Array.isArray(data) ? data : [data];
+}
+
+// Fetch live tip percentiles from Jito (feeds the agent's reasoning)
+async function getTipPercentiles(): Promise<{
+  p25: number;
+  p50: number;
+  p75: number;
+  p95: number;
+}> {
+  const res = await fetch("https://bundles.jito.wtf/api/v1/bundles/tip_floor");
+  const data = (await res.json()) as any[];
+  const latest = data[0];
+  return {
+    p25: Math.round(latest.landed_tips_25th_percentile * 1_000_000_000),
+    p50: Math.round(latest.landed_tips_50th_percentile * 1_000_000_000),
+    p75: Math.round(latest.landed_tips_75th_percentile * 1_000_000_000),
+    p95: Math.round(latest.landed_tips_95th_percentile * 1_000_000_000),
+  };
+}
+
+// Read the last 5 logged outcomes so the agent reasons from real history
+function getRecentOutcomes(): ("landed" | "failed")[] {
+  const logsDir = path.resolve(__dirname, "../../logs");
+  if (!fs.existsSync(logsDir)) {
+    return ["landed", "landed", "landed", "landed", "landed"];
+  }
+
+  const files = fs
+    .readdirSync(logsDir)
+    .filter((f) => f.endsWith(".json"))
+    .map((f) => ({
+      name: f,
+      time: fs.statSync(path.join(logsDir, f)).mtime.getTime(),
+    }))
+    .sort((a, b) => b.time - a.time)
+    .slice(0, 5);
+
+  if (files.length === 0) {
+    return ["landed", "landed", "landed", "landed", "landed"];
+  }
+
+  return files.map((f) => {
+    const content = JSON.parse(
+      fs.readFileSync(path.join(logsDir, f.name), "utf-8"),
+    );
+    return content.status === "failed" ? "failed" : "landed";
+  });
 }
 
 async function main() {
   console.log("Smart Transaction Stack — Phase 3: Real Bundle Submission");
-  console.log("=============================================================\n");
+  console.log(
+    "=============================================================\n",
+  );
 
   const connection = new Connection(MAINNET_RPC_URL, "confirmed");
   const payer = loadKeypair(MAINNET_KEYPAIR_PATH);
@@ -91,52 +161,86 @@ async function main() {
   console.log(`Balance: ${balance / 1_000_000_000} SOL\n`);
 
   if (balance < 5000) {
-    throw new Error("Insufficient balance to cover fees and tip. Aborting before spending anything.");
+    throw new Error(
+      "Insufficient balance to cover fees and tip. Aborting before spending anything.",
+    );
   }
 
   // Get live tip accounts
   console.log("Fetching live Jito tip accounts...");
   const tipAccounts = await getTipAccounts();
   console.log(`Got ${tipAccounts.length} tip accounts.`);
-  const tipAccount = new PublicKey(tipAccounts[Math.floor(Math.random() * tipAccounts.length)]);
+  const tipAccount = new PublicKey(
+    tipAccounts[Math.floor(Math.random() * tipAccounts.length)],
+  );
   console.log(`Selected tip account: ${tipAccount.toBase58()}\n`);
 
-  // Decide tip amount (placeholder for now - Phase 5 agent plugs in here)
-  const tipLamports = 1_500_000; // TEMPORARY - will be replaced with agent's decideTip() output
-  console.log(`Tip amount: ${tipLamports} lamports (placeholder — agent integration next)\n`);
+  // ── AI agent decides the tip — no hardcoded value ───────────────────────
+  console.log("Fetching live tip percentiles...");
+  const tipPercentiles = await getTipPercentiles();
+  console.log(
+    `Percentiles (lamports) — p25: ${tipPercentiles.p25}, p50: ${tipPercentiles.p50}, p75: ${tipPercentiles.p75}, p95: ${tipPercentiles.p95}\n`,
+  );
 
-   // Wait for a near Jito leader window before locking in any blockhash 
+  const slotForAgent = await connection.getSlot("confirmed");
+  const recentOutcomes = getRecentOutcomes();
+  console.log(`Recent outcomes fed to agent: [${recentOutcomes.join(", ")}]\n`);
+
+  console.log("Calling AI agent for tip decision...");
+  const agentResult = await decideTip({
+    tipPercentiles,
+    currentSlot: slotForAgent,
+    slotsUntilJitoLeader: 2, // leader proximity already confirmed by waitForJitoLeaderWindow below
+    recentOutcomes,
+    networkCondition: "moderate",
+  });
+
+  console.log("\n--- Agent Reasoning ---");
+  console.log(agentResult.reasoning);
+  console.log("-----------------------\n");
+
+  if (agentResult.usedFallback) {
+    console.warn(
+      "WARNING: Agent format fallback was used. This submission's tip was NOT fully agent-reasoned.\n",
+    );
+  }
+
+  const tipLamports = agentResult.tipLamports;
+  console.log(`Tip amount (agent-decided): ${tipLamports} lamports\n`);
+
+  // ── Step 3: Wait for a near Jito leader window before locking in a blockhash ──
   await waitForJitoLeaderWindow(connection);
 
-  //  Fetch a fresh blockhash at 'confirmed' commitment 
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+  // ── Step 3b: Fetch a fresh blockhash at 'confirmed' commitment ──────────
+  const { blockhash, lastValidBlockHeight } =
+    await connection.getLatestBlockhash("confirmed");
   console.log(`Blockhash: ${blockhash}`);
   console.log(`Valid until block height: ${lastValidBlockHeight}\n`);
 
   // Build the transaction — a tiny self-transfer + tip
   const instructions = [
-  SystemProgram.transfer({
-    fromPubkey: payer.publicKey,
-    toPubkey: payer.publicKey,
-    lamports: 1000,
-  }),
-  SystemProgram.transfer({
-    fromPubkey: payer.publicKey,
-    toPubkey: tipAccount,
-    lamports: tipLamports,
-  }),
-];
+    SystemProgram.transfer({
+      fromPubkey: payer.publicKey,
+      toPubkey: payer.publicKey,
+      lamports: 1000,
+    }),
+    SystemProgram.transfer({
+      fromPubkey: payer.publicKey,
+      toPubkey: tipAccount,
+      lamports: tipLamports,
+    }),
+  ];
 
-const messageV0 = new TransactionMessage({
-  payerKey: payer.publicKey,
-  recentBlockhash: blockhash,
-  instructions,
-}).compileToV0Message();
+  const messageV0 = new TransactionMessage({
+    payerKey: payer.publicKey,
+    recentBlockhash: blockhash,
+    instructions,
+  }).compileToV0Message();
 
-const transaction = new VersionedTransaction(messageV0);
-transaction.sign([payer]);
+  const transaction = new VersionedTransaction(messageV0);
+  transaction.sign([payer]);
 
-const serializedTx = Buffer.from(transaction.serialize()).toString("base64");
+  const serializedTx = Buffer.from(transaction.serialize()).toString("base64");
 
   // Submit as a Jito bundle
   console.log("Submitting bundle to Jito block engine...");
@@ -147,14 +251,17 @@ const serializedTx = Buffer.from(transaction.serialize()).toString("base64");
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "sendBundle",
-        params: [[serializedTx], { encoding: "base64" }],
+      jsonrpc: "2.0",
+      id: 1,
+      method: "sendBundle",
+      params: [[serializedTx], { encoding: "base64" }],
     }),
   });
 
-  const bundleData = await bundleRes.json() as { error?: any; result?: string };
+  const bundleData = (await bundleRes.json()) as {
+    error?: any;
+    result?: string;
+  };
 
   if (bundleData.error) {
     console.error("Bundle submission failed:", bundleData.error);
@@ -168,7 +275,9 @@ const serializedTx = Buffer.from(transaction.serialize()).toString("base64");
   console.log(`Submitted slot: ${submittedSlot}`);
   console.log(`\nCheck status: https://explorer.jito.wtf/bundle/${bundleId}`);
   console.log(`Or check your wallet on Solana Explorer:`);
-  console.log(`https://explorer.solana.com/address/${payer.publicKey.toBase58()}`);
+  console.log(
+    `https://explorer.solana.com/address/${payer.publicKey.toBase58()}`,
+  );
 }
 
 main().catch((err) => {
