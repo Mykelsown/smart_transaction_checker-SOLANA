@@ -1,0 +1,18 @@
+{
+  "bundle_id": "f90fc4c3810fb10e470e12763c39a46ae230875f93000c67e26ea9cd38e2684e",
+  "tip_amount_lamports": 5500,
+  "agent_reasoning": "## Step-by-step reasoning:\n\n### 1. Baseline from percentiles\n- p25: 1,002 lamports (low cost, lower landing probability)\n- p50: 2,163 lamports (median — reasonable baseline)\n- p75: 3,990 lamports (competitive, above majority)\n- p95: 14,208 lamports (very high, near-guaranteed landing)\n\n### 2. Recent failure rate\nLast 5 outcomes: [landed, landed, landed, **failed**, **failed**]\n- 2 of the last 5 failed = 40% recent failure rate\n- This is elevated and suggests tip pressure is increasing or recent tips were too low\n- Need to tip above where recent failures occurred → push above p50 at minimum\n\n### 3. Urgency — slots until Jito leader\n- Only **2 slots** until next Jito leader window\n- This is very urgent — almost no room to retry with a higher tip if this one fails\n- With only 2 slots, failure means missing this leader window entirely\n- This pushes us toward a more aggressive tip\n\n### 4. Network condition: moderate\n- Not extreme congestion, but not calm either\n- p75 (~4,000) should provide good coverage under moderate conditions\n\n### 5. Balancing cost vs. landing probability\n- Given 2 failures out of last 5 AND only 2 slots until leader, the cost of failure (missing the window) outweighs the marginal cost of a higher tip\n- Targeting **above p75** (~4,000) but not full p95 (~14,208) given moderate (not high) network conditions\n- A tip around **5,000–6,000** lamports sits meaningfully above p75 and provides strong landing probability without going full p95\n- Landing at ~5,500 lamports reflects urgency + failure signal without overpaying for moderate conditions\n\nTIP: 5500",
+  "submitted_at": "2026-06-29T10:46:29.765Z",
+  "submitted_slot": 429650105,
+  "processed_at": null,
+  "processed_slot": null,
+  "confirmed_at": null,
+  "confirmed_slot": null,
+  "finalized_at": null,
+  "finalized_slot": null,
+  "status": "failed",
+  "failure_reason": "BundleFailure",
+  "latency_processed_ms": null,
+  "latency_confirmed_ms": null,
+  "latency_finalized_ms": null
+}
