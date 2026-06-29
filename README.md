@@ -2,7 +2,7 @@
 
 A real-time Solana transaction infrastructure system built for the Superteam Nigeria Advanced Infrastructure Challenge. It observes live network state, prices Jito bundle tips using an LLM-backed reasoning agent, submits bundles on mainnet, and tracks every submission across the full commitment lifecycle.
 
-**Architecture document:** https://beaded-plume-585.notion.site/Smart-Transaction-Stack-Architecture-Document-1e1d32ea43984f8da9af5f57a2799515?source=copy_link
+**Architecture document:** [link to your public Notion page]
 
 ---
 
@@ -15,6 +15,16 @@ A real-time Solana transaction infrastructure system built for the Superteam Nig
 - Tracks each bundle's lifecycle (`submitted → processed → confirmed → finalized`) with timestamps, slot numbers, and latency deltas
 - Classifies failures (expired blockhash, fee too low, compute exceeded, bundle failure) rather than treating every non-success the same way
 - Writes structured JSON logs for every submission, success or failure, to `/logs/`
+
+## Known limitation: mainnet bundle landing
+
+Real bundle submissions in this deployment were consistently accepted by Jito's block engine API (a bundle ID was returned each time) but did not land on-chain, confirmed via `getBundleStatuses` returning an empty result set and unchanged wallet balances across every attempt.
+
+This was investigated across several independent angles rather than left unexamined: insufficient balance was ruled out (pre-flight balance checks passed every time), malformed transaction encoding was ruled out (a separate, distinct decode error encountered earlier was fixed and did not recur), and tip size as the sole cause was tested directly (a 300x tip increase produced an identical result). Leader-window timing was restructured three separate times, requiring proximity within two slots, then requiring the leader to be the current slot exactly, then targeting one to two slots ahead to account for submission round-trip latency, with no change in outcome across any variant. An RPC endpoint swap was also attempted as a further isolation step.
+
+The consistency of this result across that many independently varied causes points toward infrastructure-level constraints rather than a single code defect: most likely network round-trip latency between the development environment and Jito's block engine exceeding the bundle's roughly 800ms effective validity window, and/or genuine auction loss against competing bundles tipping higher in the same window (observed directly in one run, where a parser fallback caused a 1,024 lamport tip to be submitted against a same-moment p95 of 27,653 lamports).
+
+The full diagnostic process, including the specific evidence ruled in and out at each step, is documented in Section 5.3 of the architecture document. The submission logic, AI tip agent, lifecycle tracking, and failure classification system are all functional and were validated independently; the constraint identified here is specifically in the final mainnet network path to Jito's block engine under this deployment's conditions.
 
 ## Why both devnet and mainnet
 
