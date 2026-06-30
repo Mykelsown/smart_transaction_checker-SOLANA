@@ -1,0 +1,18 @@
+{
+  "bundle_id": "ef6c4524b93675f0bc2ef11dec9af4ac4d5ea3434f2daf90138838ea9adb440f",
+  "tip_amount_lamports": 50000,
+  "agent_reasoning": "I'll reason through this step by step:\n\n**1. Baseline from network conditions:**\nNetwork is \"moderate,\" so I'll use the p50–p75 range as a starting point: roughly 1,889–6,325 lamports.\n\n**2. Recent failure rate (5/5 failures):**\nThis is a critical signal. Five consecutive failures strongly suggests the current tip level is insufficient to compete. This pushes me well above the baseline — likely toward p75 or higher. The failures indicate many other bundles are outbidding mine, so I need to move aggressively up the distribution.\n\n**3. Urgency — 2 slots until next Jito leader:**\nWith only 2 slots remaining, there is essentially no room to retry with a higher tip if this one fails. I must land this bundle now. This is a strong argument for going above p75 and closer to p95 (100,000 lamports) to maximize landing probability in this narrow window.\n\n**4. Cost consideration:**\nWhile cost matters, the combination of 5 consecutive failures + only 2 slots remaining makes cost secondary. Missing the window entirely is worse than paying a higher tip. However, jumping all the way to p95 (100,000) may be excessive — a value between p75 and p95 that clearly signals priority without being at the extreme tail makes sense.\n\n**5. Decision:**\n- p75 = 6,325 (likely still too low given 5 failures)\n- p95 = 100,000 (upper bound, max urgency)\n- Given 5/5 failures + 2-slot urgency, I'll target roughly the 85th–90th percentile, which I estimate around 40,000–50,000 lamports. Splitting the difference between p75 and p95 on a log scale: ~25,000 lamports. But given the extreme failure rate, I'll push higher toward ~50,000 to be decisive.\n\nTIP: 50000",
+  "submitted_at": "2026-06-29T10:52:39.582Z",
+  "submitted_slot": 429651006,
+  "processed_at": null,
+  "processed_slot": null,
+  "confirmed_at": null,
+  "confirmed_slot": null,
+  "finalized_at": null,
+  "finalized_slot": null,
+  "status": "failed",
+  "failure_reason": "BundleFailure",
+  "latency_processed_ms": null,
+  "latency_confirmed_ms": null,
+  "latency_finalized_ms": null
+}

@@ -1,0 +1,18 @@
+{
+  "bundle_id": "d4e0dccf44403403f1b7837e8d870f3f8dc4f73f39986c1badaed1b05b8b769b",
+  "tip_amount_lamports": 28000,
+  "agent_reasoning": "I'll reason through this step by step:\n\n**1. Cost Consideration**\nLower tips are preferable, but not at the expense of landing. The baseline p50 is 4,671 lamports, which represents the median competitive tip.\n\n**2. Landing Probability**\n- p75 (10,863) gives us a solid edge over the majority of bundles\n- p95 (25,663) would be aggressive but costly\n- To land reliably, targeting above p75 makes sense given current conditions\n\n**3. Recent Failure Rate**\n4 out of 5 recent bundles failed (80% failure rate). This is a strong signal that my previous tip was too low for current network competition. I need to meaningfully increase the tip to break out of this failure pattern. The single success likely came from a lucky slot or slightly better conditions. I should target well above p75 to stand out.\n\n**4. Urgency**\nOnly **2 slots until the next Jito leader window** — this is critical. I have essentially no room to retry with a higher tip if this one fails. I need to land this bundle NOW. This pushes me toward a more aggressive tip, closer to p95.\n\n**Synthesis:**\n- Failure rate → push significantly above p75\n- Urgency (2 slots) → push toward p95 or slightly above\n- Network: moderate → p95 (~25,663) should be sufficient, no need to massively overshoot\n- I'll target roughly p95 (~25,663) with a slight buffer to ensure I'm competitive: ~28,000 lamports\n\nThis balances cost (not wildly over p95) while accounting for the high failure rate and near-zero retry opportunity.\n\nTIP: 28000",
+  "submitted_at": "2026-06-29T10:51:39.581Z",
+  "submitted_slot": 429650856,
+  "processed_at": null,
+  "processed_slot": null,
+  "confirmed_at": null,
+  "confirmed_slot": null,
+  "finalized_at": null,
+  "finalized_slot": null,
+  "status": "failed",
+  "failure_reason": "BundleFailure",
+  "latency_processed_ms": null,
+  "latency_confirmed_ms": null,
+  "latency_finalized_ms": null
+}

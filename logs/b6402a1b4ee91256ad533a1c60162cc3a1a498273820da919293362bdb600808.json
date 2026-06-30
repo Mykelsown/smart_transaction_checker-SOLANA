@@ -1,0 +1,18 @@
+{
+  "bundle_id": "b6402a1b4ee91256ad533a1c60162cc3a1a498273820da919293362bdb600808",
+  "tip_amount_lamports": 10500,
+  "agent_reasoning": "## Step-by-step reasoning:\n\n### 1. Recent failure rate\nLast 5 outcomes: failed, failed, landed, landed, landed\n- 2 out of 5 failed = 40% failure rate\n- However, the most recent 3 all landed, suggesting conditions may have improved\n- Still, 40% historical failure rate warrants some caution\n\n### 2. Urgency\n- Only **2 slots** until the next Jito leader window\n- This is very urgent — if this bundle fails, there's almost no time to retry before the window closes\n- This strongly argues for tipping **above the median**, closer to p75 or higher\n\n### 3. Network condition\n- Described as **moderate** — not congested, but not idle\n- p50 is 2,092 lamports, p75 is 8,112 lamports\n- Moderate conditions suggest p75 range is reasonable for solid landing probability\n\n### 4. Cost vs. landing probability\n- p50 (2,092): ~50% landing probability — too risky given urgency and 2-slot window\n- p75 (8,112): ~75% landing probability — meaningfully better\n- p95 (33,467): Higher certainty but expensive; network is only \"moderate,\" so this may be overkill\n- A tip slightly above p75 balances cost and high landing probability well\n\n### 5. Decision\nWith:\n- Only 2 slots until leader (high urgency = limited retry chance)\n- 40% recent failure rate (though improving)\n- Moderate network conditions\n\nI'll target slightly above p75 (~8,112) to push landing probability meaningfully higher than 75% without going all the way to p95. A value around **10,000–12,000** lamports seems optimal — roughly 25% above p75, giving strong inclusion odds without extreme cost.\n\nChoosing **10,500 lamports** as a balanced, concrete value.\n\nTIP: 10500",
+  "submitted_at": "2026-06-29T10:49:00.036Z",
+  "submitted_slot": 429650468,
+  "processed_at": null,
+  "processed_slot": null,
+  "confirmed_at": null,
+  "confirmed_slot": null,
+  "finalized_at": null,
+  "finalized_slot": null,
+  "status": "failed",
+  "failure_reason": "BundleFailure",
+  "latency_processed_ms": null,
+  "latency_confirmed_ms": null,
+  "latency_finalized_ms": null
+}

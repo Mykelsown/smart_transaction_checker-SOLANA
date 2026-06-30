@@ -2,7 +2,7 @@
 
 A real-time Solana transaction infrastructure system built for the Superteam Nigeria Advanced Infrastructure Challenge. It observes live network state, prices Jito bundle tips using an LLM-backed reasoning agent, submits bundles on mainnet, and tracks every submission across the full commitment lifecycle.
 
-**Architecture document:** [link to your public Notion page]
+**Architecture document:** https://app.notion.com/p/Smart-Transaction-Stack-Architecture-Document-1e1d32ea43984f8da9af5f57a2799515
 
 ---
 

@@ -1,0 +1,18 @@
+{
+  "bundle_id": "0f418876c2e2a11c71039b6865ed6d6887a7bef70c45306cd8f256a7917985f4",
+  "tip_amount_lamports": 7500,
+  "agent_reasoning": "I'll reason through each factor step-by-step:\n\n**1. Cost Consideration**\nLower tips save money. p25 (1000) and p50 (1489) represent the cheaper end. Ideally we stay near these if conditions allow.\n\n**2. Landing Probability**\n- p50 (1489) lands roughly half the time under normal conditions\n- p75 (5772) gives a solid 75th percentile landing rate\n- Network condition is \"moderate\" — not congested, not idle — so we don't need to go extreme, but we shouldn't lowball either\n\n**3. Recent Failure Rate**\nLast 5 outcomes: [failed, landed, landed, landed, failed]\n- 2 out of 5 failed = 40% failure rate\n- This is elevated. The most recent bundle failed, which is a signal to raise the tip above what we last used\n- This pushes us above p50, likely toward p75 territory\n\n**4. Urgency**\n- Only **2 slots** until the next Jito leader window\n- This is very urgent — if this bundle fails, we likely miss the window entirely and must wait for the next leader rotation\n- With virtually no retry opportunity, we should lean toward a tip that strongly favors inclusion\n\n**Synthesis:**\n- Moderate network → p75 (~5772) would normally suffice\n- Recent failure + only 2 slots until leader → urgency demands we go somewhat above p75 to ensure high confidence landing\n- Going all the way to p95 (32886) seems excessive for moderate conditions\n- A tip between p75 and p95, closer to p75 but meaningfully above it, balances cost and landing probability well\n- ~7500–8000 lamports feels appropriate: above p75, accounts for recent failures and urgency, without overpaying at p95 rates\n\nTIP: 7500",
+  "submitted_at": "2026-06-29T10:47:43.761Z",
+  "submitted_slot": 429650285,
+  "processed_at": null,
+  "processed_slot": null,
+  "confirmed_at": null,
+  "confirmed_slot": null,
+  "finalized_at": null,
+  "finalized_slot": null,
+  "status": "failed",
+  "failure_reason": "BundleFailure",
+  "latency_processed_ms": null,
+  "latency_confirmed_ms": null,
+  "latency_finalized_ms": null
+}

@@ -1,0 +1,18 @@
+{
+  "bundle_id": "434519658a15d560243a0f45b89c6f180ee8ce012892020a42c42c2af4105b1e",
+  "tip_amount_lamports": 50000,
+  "agent_reasoning": "## Step-by-step reasoning:\n\n### 1. Baseline from percentiles\n- p50 = 7,295 lamports is the median tip\n- p75 = 15,075 lamports gives upper-quartile landing probability\n- p95 = 100,000 lamports is the high-urgency tier\n\n### 2. Recent failure rate\nLast 5 outcomes: [failed, failed, failed, landed, landed]\n- 3 of the last 5 failed = 60% failure rate\n- This is concerning. The recent tip was likely too low or network competition increased\n- This pushes me toward raising the tip above the baseline\n\n### 3. Urgency — Slots until Jito leader: 2\n- Only 2 slots until the next Jito leader window\n- If this bundle fails, there's essentially no room to retry before the window closes\n- This is high urgency — a failed bundle here means missing the window entirely\n- Strong reason to tip aggressively\n\n### 4. Network condition: moderate\n- Not congested, but not calm either\n- p75 (15,075) should be sufficient for moderate conditions normally\n- But combined with the failure rate and urgency, I should go above p75\n\n### 5. Balancing cost vs. landing probability\n- Given: 60% recent failure rate + only 2 slots + moderate network\n- Targeting somewhere between p75 and p95 is rational\n- p75 = 15,075 — probably not enough given failure pattern\n- p95 = 100,000 — might be overkill for moderate conditions\n- A reasonable aggressive-but-not-maximum tip: ~50,000 lamports\n- This is ~3.3x the median, well above p75, roughly halfway to p95 on a logarithmic scale\n- This strongly improves landing odds without going full p95\n\nTIP: 50000",
+  "submitted_at": "2026-06-29T10:50:41.102Z",
+  "submitted_slot": 429650715,
+  "processed_at": null,
+  "processed_slot": null,
+  "confirmed_at": null,
+  "confirmed_slot": null,
+  "finalized_at": null,
+  "finalized_slot": null,
+  "status": "failed",
+  "failure_reason": "BundleFailure",
+  "latency_processed_ms": null,
+  "latency_confirmed_ms": null,
+  "latency_finalized_ms": null
+}
